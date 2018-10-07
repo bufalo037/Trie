@@ -1,0 +1,113 @@
+							Costea Mihai 312CB
+								  Tema3SD
+
+===============================================================================
+
+La functia citire_cuv am pus un if care trateaza cazul unui carriage return 
+deoarece testul 8 era buit, sau a fost bulit si dupa a fost reparat (in timp ce
+este scris acest README) el este bulit, daca dupa ce se repara daca se repara
+da cumva segmentation fault la testul8 din anumite motive, sa se stearga din 
+fisierul functii.c liniile care trateaza if-ul cu carriage return (74-79).
+Desi nu ar trebui sa se intample, deoarece if-ul ala nu va influenta cu nimic.
+
+===============================================================================
+
+Am ales sa folosesc un pointer pe care il realoc in functie de nevoie. Nu am 
+vrut sa folosesc liste pt ca ar fi durat destul de mult cautarea, si nu mi se
+parea rentabil. Nu mi se parea rentabil nici folosirea unui vector de pointeri
+care sa fie nefolosit aproape in intregime (asta ar fi insemnat 290 de bytes pe
+un sistem de 64 bits pe nod alocat). Asa ca m-am gandit sa folosesc 2 vectori
+de char alocati dinamic (pt mai mult info cititi trie.h) cu care imi usuram
+cautarea in vector si este mai rentabil consumam doar 36*2 bytes in loc de 
+36*8. Se va consuma mai multa memorie decat in cazul in care as fi alocat toti
+pointerii de la bun inceput, decat in cazuri extreme in care dintr-un nod pleaca
+mai mult de 28 de pointeri ceea ce e destul de improbabil sa se intample pt un
+numar mari de noduri. Chiar daca s-ar intampla pt cateva majoritatea or sa aiba
+mai putin de 290 de bytes facand abordarea asta eficienta, economisind memorie,
+si facand operatiile de cautare intr-un mod foarte rapid fara iterare prin 
+lista/vector. Daca pasul de realocare  setat de mine nu este convenabil in
+functii.h printr-un macro se poate modifica oricand si se va aloca mai putina 
+memorie redundanta pe nod. Caz in care se aloca tot ce se foloseste este pasul
+1 dar, am zis ca este mai bine sa aloc putin mai mult in plus si sa nu realoc
+mereu memorie in plus, considerand ca este destul de costisitoare operatia de
+realocare a spatiului (Am presupus ca un nod va avea in medie 6 copii si de
+acolo pasul ales de mine).
+
+
+As prefesa sa aud un feedback in legatura cu ideea mea de implementare si cu 
+cat de eficienta vi se pare. Multumesc anticipat!
+
+===============================================================================
+
+Chestiuni importante legate de implementare:
+primul nod din trie va avea mereu cuvantul -1, asa facandu-se distinctia intre
+el si alt nod din trie in cazuri recursive.In felul urmator exista 3 noduri la
+mine in trie noduri cuvant, in care se termina un cuvant, noduri auxiliare, cu
+care ajungi la un cuvant si nodul radacina.
+
+
+In continuare am sa prezint ce fac functiile aferente programului:
+
+In main am alocat dinamic variabilele necesare, si 2 buffere(am observat ca
+ruleaza un pic mai rapid daca le asociez buffere fisierelor pe care le folosesc)
+
+Citeam instructiunile intr-o variabila de tip char* si dupa citeam caracterul
+imediat urmator (pt cazurile in care nu urma sa fie citit nici un cuvant dupa
+instructiune).
+
+frees este o functie cu numar variabil de parametrii care pur si simplu da free
+la orice ii este dat ca parametru dupa primul parametru care indica numarul de
+zone de memorie care urmeaza sa fie eliberate.
+
+Decodificareind este o functie care functioneaza ca un decodificator si este 
+asignata unui pointer la o functie din structura triului
+
+Codificareind este aidoma functiei de decodificare prezentata mai sus numai ca
+aceasta codifica in schimb
+
+AlocCelula aloca spatiu pt un element de tipul TCelTrie
+
+Setlegatura care face modificarile aferente unei noi legaturi, aceasta functie
+va fi apelata doar daca este memorie alocata si acest lucru se verifica iar daca
+nu se va apela functia de realocare legaturi care realocata trie->leg in cazul
+in care toate legaturile libere.
+
+functia add adauga noduri in trie daca este necesar pt a forma cuvantul dat ca 
+parametru. Cand se ajunge la nodul care ar trebui sa contina cuvantul se 
+modifica trie->cuv la valoarea 1 corespunzatoare unui cuvant
+
+Remove va cauta recursive si va tine minte cel mai de sus nod care ar putea fi
+eliminat daca conditiile ii sunt prielnice pt a o face (sa nu existe o
+discontinuitate intretimp). Prin continuitate se inteleg alte noduri copii ale
+nodului mentionat mai sus care satisfac aceleasi conditii. eli este nodul care
+tine minte daca nodul curent din recursivitate poate sa fie sters, daca da el
+pointeaza catre nodul curent daca nu el pointeaza catre NULL, asa stiindu-se 
+daca se poate elimina ceva sau nu. Cand trebuie sa se elimine un nod, parintele
+acestuia trebuie sa rupa legasturile cu el si sa mute toate legaturile cu o 
+pozitie mai la stanga si respectiv sa modifice si cei doi vectori de char despre
+care am vorbit in trie.h si anume indleg si indchar. Acest lucru se realizeaza 
+prin functia RefacereLegaturi, functie care este apelata doar de remove daca
+se intampla ceea ce am zis mai sus.
+
+Cautare este functia apelata in main, aceasta apeleaza find care cauta recursiv
+nodul cu prefixul cel mai mare al cuvantului cuv, returnand nodul si prefixul
+prin efect lateral. Aceasta functie sta la baza si find_longest_prefix si sta
+si la baza lui find, fiind unul si acelas lucru, numai ca putin modificat.
+Motivul pt care am folosit o functie suplimentara si nu am folosit direct find
+este pt ca nu am vrut ca in main sa mai apara date redundante, precum este 
+key[0] = '\0';
+
+AfisareToateCuv este o functie care ca si in cazul de mai sus apeleaza functia
+Afisare care, afiseaza toate cuvintele din trie in ordine alfabetica care incep
+cu prefixul dat ca parametru (key). La fel am folosit o functie in plus pt ca nu
+am vrut ca utilizatorul sa dea date redundante in plus.
+
+Am folosit tot 2 functii pt rezolvarea cerintei mean_length iar aceste 2 functii 
+sunt Mean_length si Length. Functia Mean_length apeleaza recursiv Length iar 
+functia tot ce face e sa caute recursiv prin trie de la un nod dat si sa insumeze
+lungimea cuvintelor pe care o returneaza si numarul cuvintelor pe care o returneaza
+prin efect lateral.
+
+DistrugereTrie Distruge Nodul dat ca parametru si recursiv toti copii acestora, 
+eliberand toata memoria aferenta la care pointau ei, respectiv nodurile in sine.
+
